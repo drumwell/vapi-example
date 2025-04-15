@@ -38,16 +38,9 @@ class FinVoice:
             
             print("Starting voice assistant with briefing:", briefing)
             
-            # Start a new call with the briefing as the first message
+            # Start a new call with the pre-configured assistant
             client.start(
-                assistant={
-                    'name': "Tech News Briefer",
-                    'model': "gpt-4",
-                    'voice': "shimmer-openai",
-                    'firstMessage': briefing,
-                    'recordingEnabled': True,
-                    'interruptionsEnabled': True
-                }
+                assistant_id='495087b1-8639-45c4-b7b0-011521235a5e'
             )
             
             print("Call started successfully! You can now interact with the assistant.")
