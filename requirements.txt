@@ -1,0 +1,6 @@
+vapi-python
+requests
+python-dotenv
+newsapi-python
+yfinance
+aiohttp 
