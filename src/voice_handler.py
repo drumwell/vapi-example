@@ -20,9 +20,3 @@ class VoiceHandler:
         Stops the current assistant session
         """
         self.client.stop()
-        
-    async def create_conversation(self, call_id):
-        """
-        Creates a new conversation with the assistant
-        """
-        return call_id 
