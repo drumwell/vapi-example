@@ -1,71 +1,67 @@
-from vapi_python import Vapi
-from datetime import datetime
 import os
 import asyncio
-from pathlib import Path
+import logging
+from typing import Optional
 from dotenv import load_dotenv
-from .news_fetcher import NewsFetcher
-from .news_processor import NewsProcessor
 from .voice_handler import VoiceHandler
+from .extend_integration import ExtendIntegration
+from .command_processor import CommandProcessor
+from .response_generator import ResponseGenerator
 
-class FinVoice:
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Load environment variables from .env file
+load_dotenv()
+
+class ExtendVoice:
+    """
+    Main class for the Extend Voice Assistant.
+    Coordinates the interaction between voice handling, Extend integration,
+    command processing, and response generation.
+    """
+    
     def __init__(self):
+        """Initialize all components of the Extend Voice Assistant."""
         self.voice_handler = VoiceHandler()
-        self.news_fetcher = NewsFetcher()
-        self.news_processor = NewsProcessor()
+        self.extend_integration = ExtendIntegration()
+        self.command_processor = CommandProcessor(self.extend_integration)
+        self.response_generator = ResponseGenerator()
         
-    async def get_daily_briefing(self):
-        # Fetch tech and AI focused news
-        raw_news = await self.news_fetcher.fetch_tech_news()
+    async def start(self) -> None:
+        """
+        Start the voice assistant and begin processing voice commands.
         
-        # Process and summarize news
-        summary = self.news_processor.create_briefing(raw_news)
-        
-        return summary
-
-    async def start(self):
+        Raises:
+            Exception: If there's an error during initialization or execution.
+        """
         try:
-            # Get the Vapi client
-            print("Initializing Vapi client...")
-            client = self.voice_handler.get_client()
+            # Generate welcome message
+            welcome_message = self.response_generator.generate_welcome_message()
             
-            try:
-                # Get initial briefing
-                briefing = await self.get_daily_briefing()
-            except Exception as e:
-                print(f"Error fetching news: {str(e)}")
-                briefing = "I apologize, but I'm having trouble fetching the latest news. Would you like me to tell you about technology and AI in general?"
+            logger.info("Starting voice assistant with welcome message: %s", welcome_message)
             
-            print("Starting voice assistant with briefing:", briefing)
+            # Start a new call with the welcome message
+            self.voice_handler.start_call(first_message=welcome_message)
             
-            # Start a new call with the briefing as the first message
-            client.start(
-                assistant={
-                    'name': "Tech News Briefer",
-                    'model': "gpt-4",
-                    'voice': "shimmer-openai",
-                    'firstMessage': briefing,
-                    'recordingEnabled': True,
-                    'interruptionsEnabled': True
-                }
-            )
-            
-            print("Call started successfully! You can now interact with the assistant.")
+            logger.info("Call started successfully! You can now interact with the assistant.")
             
             # Keep the connection alive
             while True:
                 await asyncio.sleep(1)
                 
         except Exception as e:
-            print(f"Error occurred: {str(e)}")
+            logger.error("Error occurred: %s", str(e), exc_info=True)
             raise
         finally:
             # Ensure we stop the assistant when done
-            self.voice_handler.stop_assistant()
+            self.voice_handler.stop_call()
+            logger.info("Voice assistant stopped.")
 
 if __name__ == "__main__":
-    # Load environment variables from .env file
-    load_dotenv()
-
-    finvoice = FinVoice()
-    asyncio.run(finvoice.start()) 
+    extend_voice = ExtendVoice()
+    asyncio.run(extend_voice.start()) 
